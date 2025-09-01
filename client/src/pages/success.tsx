@@ -93,7 +93,7 @@ export default function Success() {
         <div className="mt-12 p-6 bg-accent/5 rounded-xl border border-accent/20">
           <h3 className="font-semibold mb-2 text-accent">Importante!</h3>
           <p className="text-sm text-muted-foreground">
-            Se não receber o e-mail em até 10 minutos, verifique sua caixa de spam ou entre em contato pelo WhatsApp.
+            Seu pagamento foi processado pelo Cakto. Se não receber o e-mail de confirmação em até 10 minutos, verifique sua caixa de spam ou entre em contato pelo WhatsApp.
           </p>
         </div>
       </div>

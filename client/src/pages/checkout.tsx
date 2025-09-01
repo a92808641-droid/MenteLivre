@@ -12,35 +12,29 @@ const CheckoutForm = ({ subscriptionId, plano, amount }: { subscriptionId: strin
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const whatsappMessage = `Olá! Gostaria de finalizar minha inscrição na Mentoria Mente Livre.
-
-Detalhes da inscrição:
-- ID: ${subscriptionId}
-- Plano: ${plano === 'pix' ? 'PIX - R$ 297' : 'Cartão - 12x de R$ 29,70'}
-- Valor: ${amount}
-
-Aguardo instruções para pagamento via Cakto.`;
-
-  const handleWhatsAppPayment = () => {
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    window.open(`https://wa.me/5562993555185?text=${encodedMessage}`, '_blank');
+  const handleCaktoPayment = () => {
+    // Store subscription ID for when user returns
+    sessionStorage.setItem('current_subscription_id', subscriptionId);
+    
+    // Open Cakto payment page
+    window.open('https://pay.cakto.com.br/rbkmhmg_551147', '_blank');
     
     toast({
-      title: "Redirecionado para WhatsApp!",
+      title: "Redirecionado para Cakto!",
       description: "Complete o pagamento e retorne aqui para confirmar.",
     });
   };
 
-  const handleManualConfirmation = () => {
+  const handlePaymentConfirmation = () => {
     setLocation('/success');
   };
 
   return (
     <div className="space-y-6">
       <div className="glass-effect p-6 rounded-xl text-center">
-        <h3 className="text-lg font-semibold mb-4">Finalizar Pagamento via Cakto</h3>
+        <h3 className="text-lg font-semibold mb-4">Finalizar Pagamento</h3>
         <p className="text-muted-foreground mb-6">
-          Para finalizar sua inscrição, clique no botão abaixo para ser direcionado ao WhatsApp onde você receberá as instruções de pagamento via Cakto.
+          Clique no botão abaixo para ser direcionado à página de pagamento segura do Cakto.
         </p>
         
         <div className="bg-accent/10 p-4 rounded-lg mb-6">
@@ -49,25 +43,44 @@ Aguardo instruções para pagamento via Cakto.`;
             {plano === 'pix' ? 'Pagamento à vista via PIX' : 'Parcelamento em 12x no cartão'}
           </p>
         </div>
+
+        <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground mb-4">
+          <Lock className="w-3 h-3" />
+          <span>Pagamento 100% seguro via Cakto</span>
+        </div>
       </div>
       
       <Button
-        onClick={handleWhatsAppPayment}
-        className="w-full bg-accent text-accent-foreground py-4 text-lg hover:bg-secondary"
-        data-testid="button-whatsapp-payment"
+        onClick={handleCaktoPayment}
+        className="w-full bg-accent text-accent-foreground py-4 text-lg hover:bg-secondary transition-all duration-300 transform hover:scale-105"
+        data-testid="button-cakto-payment"
       >
         <Lock className="w-5 h-5 mr-2" />
-        Finalizar via WhatsApp
+        Pagar com Cakto
       </Button>
       
       <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Após realizar o pagamento, clique no botão abaixo:
+        </p>
         <Button
           variant="outline"
-          onClick={handleManualConfirmation}
+          onClick={handlePaymentConfirmation}
           className="text-sm"
-          data-testid="button-already-paid"
+          data-testid="button-payment-completed"
         >
-          Já realizei o pagamento
+          ✅ Pagamento Realizado
+        </Button>
+      </div>
+      
+      <div className="text-center mt-4">
+        <Button
+          variant="ghost"
+          onClick={() => window.open("https://wa.me/5562993555185", "_blank")}
+          className="text-xs text-muted-foreground hover:text-accent"
+          data-testid="button-support-whatsapp"
+        >
+          Dúvidas? Fale conosco no WhatsApp
         </Button>
       </div>
     </div>
@@ -158,7 +171,7 @@ export default function Checkout() {
 
         <div className="text-center mt-8 text-sm text-muted-foreground">
           <p>Pagamento processado com segurança pelo Cakto</p>
-          <p className="mt-2">Seus dados estão protegidos com criptografia SSL</p>
+          <p className="mt-2">Menor taxa do Brasil • Pagamento instantâneo</p>
         </div>
       </div>
     </div>
