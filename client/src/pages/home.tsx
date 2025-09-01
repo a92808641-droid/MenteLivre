@@ -349,7 +349,7 @@ export default function Home() {
           
           <div className="border-t border-border pt-8 text-center">
             <p className="text-muted-foreground text-sm">
-              © 2025 Mentoria Mente Livre. Todos os direitos reservados. | Conteúdo 100% online e já gravado
+              © 2025 Mentoria Mente Livre. Todos os direitos reservados. | Conteúdo 100% confiável
             </p>
           </div>
         </div>
