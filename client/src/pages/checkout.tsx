@@ -59,19 +59,6 @@ const CheckoutForm = ({ subscriptionId, plano, amount }: { subscriptionId: strin
         Pagar com Cakto
       </Button>
       
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-3">
-          Após realizar o pagamento, clique no botão abaixo:
-        </p>
-        <Button
-          variant="outline"
-          onClick={handlePaymentConfirmation}
-          className="text-sm"
-          data-testid="button-payment-completed"
-        >
-          ✅ Pagamento Realizado
-        </Button>
-      </div>
       
       <div className="text-center mt-4">
         <Button
