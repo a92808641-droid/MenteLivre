@@ -40,7 +40,7 @@ const CheckoutForm = ({ subscriptionId, plano, amount }: { subscriptionId: strin
         <div className="bg-accent/10 p-4 rounded-lg mb-6">
           <p className="text-sm font-medium mb-2">Valor: {amount}</p>
           <p className="text-sm text-muted-foreground">
-            {plano === 'pix' ? 'Pagamento à vista via PIX' : 'Parcelamento em 12x no cartão'}
+            Pagamento único via Cakto
           </p>
         </div>
 
@@ -156,7 +156,7 @@ export default function Checkout() {
             <div className="text-center">
               <div className="text-3xl font-bold text-accent mb-2">{subscriptionData.amount}</div>
               <p className="text-sm text-muted-foreground">
-                {subscriptionData.plano === 'pix' ? 'Pagamento à vista via PIX' : 'Parcelamento em 12x'} • Garantia de 30 dias
+                Pagamento único • Garantia de 30 dias
               </p>
             </div>
           </CardHeader>

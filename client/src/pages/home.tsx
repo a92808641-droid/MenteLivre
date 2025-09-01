@@ -206,9 +206,14 @@ export default function Home() {
               <div className="bg-accent/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileText className="text-accent text-2xl" />
               </div>
-              <h3 className="text-lg font-semibold mb-3">PDFs Resumidos</h3>
-              <p className="text-muted-foreground text-sm">
-                Material de apoio de cada módulo para consulta rápida e revisão
+              <h3 className="text-lg font-semibold mb-3">comunidade de apoio</h3>
+              <p className="try {
+                
+              } catch (error) {
+                
+              }ext-muted-foreground text-sm">
+                Grupos de apoio no WhatsApp e Telegram para trocar experiências e dicas
+            
               </p>
             </div>
             
@@ -248,8 +253,9 @@ export default function Home() {
             
             <div className="bg-accent/10 border border-accent/20 rounded-xl p-6 mb-8">
               <div className="flex items-center justify-center mb-4">
-                <span className="text-3xl font-bold text-accent">R$ 297</span>
-                <span className="text-lg text-muted-foreground ml-2">ou 12x de R$ 29,70</span>
+                <span className="text-3xl font-bold text-accent">R$ 37,90
+                </span>
+                <span className="text-lg text-muted-foreground ml-2">pagamento único</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 <Shield className="w-4 h-4 text-accent mr-2 inline" />

@@ -37,7 +37,7 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
   telefone: z.string().min(10, "Telefone inválido"),
-  plano: z.enum(["pix", "cartao"], { required_error: "Selecione uma forma de pagamento" }),
+  plano: z.enum(["unico", "pix", "cartao"], { required_error: "Selecione uma forma de pagamento" }),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

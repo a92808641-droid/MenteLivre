@@ -24,7 +24,7 @@ export default function SubscriptionForm() {
       nome: "",
       email: "",
       telefone: "",
-      plano: "pix",
+      plano: "unico",
     },
   });
 
@@ -37,7 +37,7 @@ export default function SubscriptionForm() {
       // Store subscription data for checkout
       const subscriptionData = {
         plano: form.getValues('plano'),
-        amount: form.getValues('plano') === 'pix' ? 'R$ 297' : 'R$ 29,70/mês (12x)',
+        amount: 'R$ 37,90',
       };
       sessionStorage.setItem(`subscription_${data.subscriptionId}`, JSON.stringify(subscriptionData));
       
@@ -144,27 +144,11 @@ export default function SubscriptionForm() {
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="plano"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm font-semibold">Forma de Pagamento</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="bg-input border-border focus:border-accent" data-testid="select-plano">
-                    <SelectValue placeholder="Selecione a forma de pagamento" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="pix">PIX - R$ 297 (À vista)</SelectItem>
-                  <SelectItem value="cartao">Cartão - 12x de R$ 29,70</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 text-center">
+          <p className="text-lg font-semibold text-accent mb-2">Mentoria Mente Livre</p>
+          <p className="text-2xl font-bold">R$ 37,90</p>
+          <p className="text-sm text-muted-foreground">Acesso vitalício • Pagamento único</p>
+        </div>
         
         <div className="flex items-start space-x-3">
           <Checkbox
