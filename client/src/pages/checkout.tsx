@@ -1,5 +1,3 @@
-import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -9,94 +7,70 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft, Lock } from "lucide-react";
 
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-if (!stripePublicKey) {
-  console.warn('Warning: VITE_STRIPE_PUBLIC_KEY not set. Checkout will be disabled.');
-}
-const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : Promise.resolve(null);
 
-const CheckoutForm = ({ subscriptionId }: { subscriptionId: string }) => {
-  const stripe = useStripe();
-  const elements = useElements();
+const CheckoutForm = ({ subscriptionId, plano, amount }: { subscriptionId: string, plano: string, amount: string }) => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const confirmPaymentMutation = useMutation({
-    mutationFn: async (paymentIntentId: string) => {
-      const res = await apiRequest("POST", "/api/confirm-payment", { paymentIntentId });
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Pagamento confirmado!",
-        description: "Redirecionando para a página de sucesso...",
-      });
-      setLocation("/success");
-    },
-    onError: (error: any) => {
-      console.error("Payment confirmation error:", error);
-      toast({
-        title: "Erro na confirmação",
-        description: "Tente novamente ou entre em contato conosco.",
-        variant: "destructive",
-      });
-    },
-  });
+  const whatsappMessage = `Olá! Gostaria de finalizar minha inscrição na Mentoria Mente Livre.
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
+Detalhes da inscrição:
+- ID: ${subscriptionId}
+- Plano: ${plano === 'pix' ? 'PIX - R$ 297' : 'Cartão - 12x de R$ 29,70'}
+- Valor: ${amount}
 
-    if (!stripe || !elements) {
-      setIsProcessing(false);
-      return;
-    }
+Aguardo instruções para pagamento via Cakto.`;
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: 'if_required',
-    });
-
-    if (error) {
-      toast({
-        title: "Erro no pagamento",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      confirmPaymentMutation.mutate(paymentIntent.id);
-    }
+  const handleWhatsAppPayment = () => {
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    window.open(`https://wa.me/5562993555185?text=${encodedMessage}`, '_blank');
     
-    setIsProcessing(false);
+    toast({
+      title: "Redirecionado para WhatsApp!",
+      description: "Complete o pagamento e retorne aqui para confirmar.",
+    });
+  };
+
+  const handleManualConfirmation = () => {
+    setLocation('/success');
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="glass-effect p-6 rounded-xl">
-        <PaymentElement />
+    <div className="space-y-6">
+      <div className="glass-effect p-6 rounded-xl text-center">
+        <h3 className="text-lg font-semibold mb-4">Finalizar Pagamento via Cakto</h3>
+        <p className="text-muted-foreground mb-6">
+          Para finalizar sua inscrição, clique no botão abaixo para ser direcionado ao WhatsApp onde você receberá as instruções de pagamento via Cakto.
+        </p>
+        
+        <div className="bg-accent/10 p-4 rounded-lg mb-6">
+          <p className="text-sm font-medium mb-2">Valor: {amount}</p>
+          <p className="text-sm text-muted-foreground">
+            {plano === 'pix' ? 'Pagamento à vista via PIX' : 'Parcelamento em 12x no cartão'}
+          </p>
+        </div>
       </div>
       
       <Button
-        type="submit"
-        disabled={!stripe || isProcessing || confirmPaymentMutation.isPending}
+        onClick={handleWhatsAppPayment}
         className="w-full bg-accent text-accent-foreground py-4 text-lg hover:bg-secondary"
-        data-testid="button-confirm-payment"
+        data-testid="button-whatsapp-payment"
       >
-        {isProcessing || confirmPaymentMutation.isPending ? (
-          <>
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            Processando pagamento...
-          </>
-        ) : (
-          <>
-            <Lock className="w-5 h-5 mr-2" />
-            Confirmar Pagamento
-          </>
-        )}
+        <Lock className="w-5 h-5 mr-2" />
+        Finalizar via WhatsApp
       </Button>
-    </form>
+      
+      <div className="text-center">
+        <Button
+          variant="outline"
+          onClick={handleManualConfirmation}
+          className="text-sm"
+          data-testid="button-already-paid"
+        >
+          Já realizei o pagamento
+        </Button>
+      </div>
+    </div>
   );
 };
 
@@ -105,25 +79,15 @@ export default function Checkout() {
   const [, setLocation] = useLocation();
   const subscriptionId = params.subscriptionId;
 
-  const { data: paymentData, isLoading, error } = useQuery({
-    queryKey: ['/api/create-subscription', subscriptionId],
-    queryFn: async () => {
-      // This would be called from the subscription form, but we need the client secret
-      // In a real scenario, we'd store this or retrieve it differently
-      throw new Error("Payment intent should be created from subscription form");
-    },
-    enabled: false, // Disabled because this should come from the subscription form
-  });
-
-  const [clientSecret, setClientSecret] = useState<string>("");
+  // Get subscription data from sessionStorage (set by subscription form)
+  const [subscriptionData, setSubscriptionData] = useState<{plano: string, amount: string} | null>(null);
 
   useEffect(() => {
-    // In a real app, you'd get the client secret from the subscription creation
-    // For now, we'll redirect back if we don't have it
-    const stored = sessionStorage.getItem(`payment_${subscriptionId}`);
+    const stored = sessionStorage.getItem(`subscription_${subscriptionId}`);
     if (stored) {
-      setClientSecret(stored);
+      setSubscriptionData(JSON.parse(stored));
     } else {
+      // If no subscription data, redirect to home
       setLocation("/");
     }
   }, [subscriptionId, setLocation]);
@@ -143,39 +107,7 @@ export default function Checkout() {
     );
   }
 
-  if (!stripePublicKey) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center">
-            <p className="text-lg font-semibold mb-4">Pagamentos Temporariamente Indisponíveis</p>
-            <p className="text-muted-foreground mb-6">
-              Estamos configurando o sistema de pagamentos. Entre em contato conosco pelo WhatsApp para finalizar sua inscrição.
-            </p>
-            <div className="space-y-3">
-              <Button 
-                onClick={() => window.open("https://wa.me/5562993555185", "_blank")}
-                className="w-full bg-accent text-accent-foreground"
-                data-testid="button-whatsapp-contact"
-              >
-                Falar no WhatsApp
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setLocation("/")}
-                className="w-full"
-                data-testid="button-back-home-temp"
-              >
-                Voltar ao início
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!clientSecret) {
+  if (!subscriptionData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-accent border-t-transparent rounded-full" />
@@ -209,21 +141,23 @@ export default function Checkout() {
               <span className="text-2xl font-bold text-accent">Mentoria Mente Livre</span>
             </CardTitle>
             <div className="text-center">
-              <div className="text-3xl font-bold text-accent mb-2">R$ 297</div>
+              <div className="text-3xl font-bold text-accent mb-2">{subscriptionData.amount}</div>
               <p className="text-sm text-muted-foreground">
-                Acesso vitalício • Garantia de 30 dias
+                {subscriptionData.plano === 'pix' ? 'Pagamento à vista via PIX' : 'Parcelamento em 12x'} • Garantia de 30 dias
               </p>
             </div>
           </CardHeader>
           <CardContent>
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <CheckoutForm subscriptionId={subscriptionId} />
-            </Elements>
+            <CheckoutForm 
+              subscriptionId={subscriptionId} 
+              plano={subscriptionData.plano}
+              amount={subscriptionData.amount}
+            />
           </CardContent>
         </Card>
 
         <div className="text-center mt-8 text-sm text-muted-foreground">
-          <p>Pagamento processado com segurança pelo Stripe</p>
+          <p>Pagamento processado com segurança pelo Cakto</p>
           <p className="mt-2">Seus dados estão protegidos com criptografia SSL</p>
         </div>
       </div>

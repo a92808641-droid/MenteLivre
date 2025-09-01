@@ -1,21 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import Stripe from "stripe";
 import { storage } from "./storage";
 import { insertSubscriptionSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('Warning: STRIPE_SECRET_KEY not set. Payment features will be disabled.');
-}
-
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-08-27.basil",
-}) : null;
-
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Create subscription and payment intent
+  // Create subscription
   app.post("/api/create-subscription", async (req, res) => {
     try {
       const validatedData = insertSubscriptionSchema.parse(req.body);
@@ -23,40 +14,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create subscription record
       const subscription = await storage.createSubscription(validatedData);
       
-      // Determine amount based on plan
-      const amount = validatedData.plano === "pix" ? 29700 : 2970; // in cents
-      
-      // Check if Stripe is available
-      if (!stripe) {
-        return res.status(500).json({
-          message: "Pagamentos temporariamente indisponíveis. Entre em contato conosco.",
-        });
-      }
-
-      // Create Stripe payment intent
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount,
-        currency: "brl",
-        automatic_payment_methods: {
-          enabled: true,
-        },
-        metadata: {
-          subscriptionId: subscription.id,
-          email: subscription.email,
-          plano: subscription.plano,
-        },
-      });
-
-      // Update subscription with Stripe payment intent ID
+      // Set initial status as pending
       await storage.updateSubscriptionStatus(
         subscription.id,
         "pending",
-        paymentIntent.id
+        undefined
       );
 
       res.json({
-        clientSecret: paymentIntent.client_secret,
+        success: true,
         subscriptionId: subscription.id,
+        whatsappLink: `https://wa.me/5562993555185?text=Olá! Gostaria de finalizar minha inscrição na Mentoria Mente Livre. ID: ${subscription.id}`,
       });
 
     } catch (error) {
@@ -74,48 +42,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Confirm payment success
+  // Confirm payment (manual confirmation)
   app.post("/api/confirm-payment", async (req, res) => {
     try {
-      const { paymentIntentId } = req.body;
+      const { subscriptionId } = req.body;
       
-      if (!paymentIntentId) {
-        return res.status(400).json({ message: "Payment Intent ID é obrigatório" });
+      if (!subscriptionId) {
+        return res.status(400).json({ message: "Subscription ID é obrigatório" });
       }
 
-      // Check if Stripe is available
-      if (!stripe) {
-        return res.status(500).json({
-          message: "Serviço de pagamento indisponível. Entre em contato conosco.",
-        });
-      }
-
-      // Retrieve payment intent from Stripe
-      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      const subscription = await storage.updateSubscriptionStatus(
+        subscriptionId,
+        "confirmed",
+        "manual_cakto_confirmation"
+      );
       
-      if (paymentIntent.status === "succeeded") {
-        const subscriptionId = paymentIntent.metadata.subscriptionId;
-        
-        if (subscriptionId) {
-          const subscription = await storage.updateSubscriptionStatus(
-            subscriptionId,
-            "confirmed",
-            paymentIntentId
-          );
-          
-          // TODO: Send confirmation email here
-          console.log(`Payment confirmed for subscription ${subscriptionId}`);
-          
-          res.json({
-            success: true,
-            subscription,
-          });
-        } else {
-          res.status(400).json({ message: "Subscription ID não encontrado" });
-        }
-      } else {
-        res.status(400).json({ message: "Pagamento não foi confirmado" });
-      }
+      console.log(`Payment confirmed for subscription ${subscriptionId}`);
+      
+      res.json({
+        success: true,
+        subscription,
+      });
 
     } catch (error) {
       console.error("Error confirming payment:", error);

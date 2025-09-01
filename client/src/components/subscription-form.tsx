@@ -34,6 +34,13 @@ export default function SubscriptionForm() {
       return res.json();
     },
     onSuccess: (data) => {
+      // Store subscription data for checkout
+      const subscriptionData = {
+        plano: form.getValues('plano'),
+        amount: form.getValues('plano') === 'pix' ? 'R$ 297' : 'R$ 29,70/mês (12x)',
+      };
+      sessionStorage.setItem(`subscription_${data.subscriptionId}`, JSON.stringify(subscriptionData));
+      
       toast({
         title: "Inscrição criada!",
         description: "Redirecionando para o pagamento...",
