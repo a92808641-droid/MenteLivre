@@ -1,7 +1,7 @@
 import { Brain, Clock, Tag, Infinity, Wind, PenTool, Dumbbell, FileText, Headphones, Book, Shield, Star, Rocket, Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import SubscriptionForm from "@/components/subscription-form";
-import FAQSection from "@/components/faq-section";
+import SubscriptionForm from "../components/subscription-form";
+import FAQSection from "../components/faq-section";
 
 export default function Home() {
   const scrollToSection = (id: string) => {

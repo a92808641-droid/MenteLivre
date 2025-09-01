@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft, Lock } from "lucide-react";
 
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+if (!stripePublicKey) {
+  console.warn('Warning: VITE_STRIPE_PUBLIC_KEY not set. Checkout will be disabled.');
 }
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : Promise.resolve(null);
 
 const CheckoutForm = ({ subscriptionId }: { subscriptionId: string }) => {
   const stripe = useStripe();
@@ -136,6 +137,38 @@ export default function Checkout() {
             <Button onClick={() => setLocation("/")} className="mt-4">
               Voltar ao início
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!stripePublicKey) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-lg font-semibold mb-4">Pagamentos Temporariamente Indisponíveis</p>
+            <p className="text-muted-foreground mb-6">
+              Estamos configurando o sistema de pagamentos. Entre em contato conosco pelo WhatsApp para finalizar sua inscrição.
+            </p>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => window.open("https://wa.me/5562993555185", "_blank")}
+                className="w-full bg-accent text-accent-foreground"
+                data-testid="button-whatsapp-contact"
+              >
+                Falar no WhatsApp
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setLocation("/")}
+                className="w-full"
+                data-testid="button-back-home-temp"
+              >
+                Voltar ao início
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

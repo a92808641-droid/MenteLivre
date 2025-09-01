@@ -6,12 +6,12 @@ import { insertSubscriptionSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY. Get it from https://dashboard.stripe.com/apikeys');
+  console.warn('Warning: STRIPE_SECRET_KEY not set. Payment features will be disabled.');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
-});
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-08-27.basil",
+}) : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -26,6 +26,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine amount based on plan
       const amount = validatedData.plano === "pix" ? 29700 : 2970; // in cents
       
+      // Check if Stripe is available
+      if (!stripe) {
+        return res.status(500).json({
+          message: "Pagamentos temporariamente indisponíveis. Entre em contato conosco.",
+        });
+      }
+
       // Create Stripe payment intent
       const paymentIntent = await stripe.paymentIntents.create({
         amount,
@@ -74,6 +81,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!paymentIntentId) {
         return res.status(400).json({ message: "Payment Intent ID é obrigatório" });
+      }
+
+      // Check if Stripe is available
+      if (!stripe) {
+        return res.status(500).json({
+          message: "Serviço de pagamento indisponível. Entre em contato conosco.",
+        });
       }
 
       // Retrieve payment intent from Stripe
